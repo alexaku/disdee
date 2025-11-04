@@ -1,0 +1,1265 @@
+# Query: 
+# ContextLines: 1
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disdee Prototype</title>
+    <!-- 1. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 2. Google Font: Inter (Discord's Font) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- 3. Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom Discord Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #202225;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #2B2D31;
+            border-radius: 4px;
+        }
+        
+        /* Hide scrollbar for the main video feed */
+        #video-feed::-webkit-scrollbar {
+            display: none;
+        }
+        #video-feed {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        /* Simple pulse animation for likes */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+        }
+        .animate-like-pulse {
+            animation: pulse 0.4s ease-in-out;
+        }
+        
+        /* Modal styles */
+        .modal-overlay {
+            transition: opacity 0.2s ease-in-out;
+        }
+        .modal-content {
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        /* NEW: Hide inactive profile tab content */
+        #profile-tab-content > div:not(.active) {
+            display: none;
+        }
+        /* NEW: Hide inactive video stats tab content */
+        #video-stats-tab-content > div:not(.active) {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-[#232428] text-[#DCDDDE] overflow-hidden">
+
+    <div class="flex h-screen">
+        
+        <!-- ======================================= -->
+        <!-- Server List (Far Left) - Discord Shell -->
+        <!-- Server list is hidden on mobile (<md) -->
+        <!-- ======================================= -->
+        <nav class="hidden md:flex flex-col w-16 bg-[#1E1F22] p-3 space-y-3 items-center shrink-0">
+            <!-- Disdee "Home" Icon -->
+            <div class="w-12 h-12 bg-[#5865F2] rounded-full flex items-center justify-center cursor-pointer group relative">
+                <!-- "Disdee" Icon SVG -->
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16.5 9.40002C16.5 9.40002 17.5 9.10002 18.7 10.1C19.9 11.1 20 12.7 18.6 13.9C17.2 15.1 15.1 14.8 15.1 14.8L16.5 9.40002Z" fill="white"/>
+                    <path d="M7.5 9.40002C7.5 9.40002 6.5 9.10002 5.3 10.1C4.1 11.1 4 12.7 5.4 13.9C6.8 15.1 8.9 14.8 8.9 14.8L7.5 9.40002Z" fill="white"/>
+                    <path d="M15.2 3.30002C13.2 2.30002 10.8 2.30002 8.8 3.30002C5.4 4.80002 3.1 8.10002 3 11.7C3 15.8 5.7 19.3 9.8 20.6C10.5 20.8 11.2 20.9 12 20.9C12.8 20.9 13.5 20.8 14.2 20.6C18.3 19.3 21 15.8 21 11.7C20.9 8.10002 18.6 4.80002 15.2 3.30002Z" fill="white"/>
+                </svg>
+                <span class="absolute left-full ml-3 px-2 py-1 bg-black text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    Home
+                </span>
+            </div>
+
+            <div class="w-full h-px bg-[#36393F]"></div>
+
+            <!-- Server Icons (Static) -->
+            <div class="w-12 h-12 bg-[#313338] rounded-full cursor-pointer hover:rounded-2xl transition-all duration-200 group relative">
+                <span class="absolute left-full ml-3 px-2 py-1 bg-black text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    Gaming Server
+                </span>
+            </div>
+            <div class="w-12 h-12 bg-[#313338] rounded-full cursor-pointer hover:rounded-2xl transition-all duration-200 group relative">
+                <span class="absolute left-full ml-3 px-2 py-1 bg-black text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    Music Hub
+                </span>
+            </div>
+            
+            <!-- Disdee "Active" Server Icon -->
+            <div class="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center font-bold text-white cursor-pointer group relative">
+                D
+                <!-- Active server indicator -->
+                <div class="w-1 h-8 bg-white rounded-r-full absolute -left-3"></div>
+                <span class="absolute left-full ml-3 px-2 py-1 bg-black text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    Disdee Videos
+                </span>
+            </div>
+        </nav>
+
+        <!-- ======================================= -->
+        <!-- Channel List (Left-Mid) - Discord Shell -->
+        <!-- Channel list is hidden on mobile (<md) -->
+        <!-- ======================================= -->
+        <nav class="hidden md:flex flex-col w-64 bg-[#2B2D31] shrink-0">
+            <!-- Header -->
+            <header class="h-12 shadow-md px-4 flex items-center justify-between shrink-0">
+                <h1 class="text-white font-bold text-lg">Disdee Feed</h1>
+            </header>
+            
+            <!-- Channel Content -->
+            <div id="sidebar-nav" class="flex-1 p-3 space-y-1 overflow-y-auto">
+                <h2 class="text-[#949BA4] text-xs font-semibold uppercase px-2 pt-2">Featured Feeds</h2>
+                <!-- Active Channel -->
+                <a href="#" class="flex items-center p-2 rounded-md bg-[#3F4248] text-white group">
+                    <span class="text-[#949BA4] group-hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M14 10H10V14H14V10ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"></path></svg>
+                    </span>
+                    <span class="ml-2">For You</span>
+                </a>
+                <a href="#" class="flex items-center p-2 rounded-md hover:bg-[#313338] text-[#B9BBBE] hover:text-white group">
+                    <span class="text-[#949BA4] group-hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M5.88 4.12L13.76 12L5.88 19.88L8.24 22.24L18.48 12L8.24 1.76L5.88 4.12Z"></path></svg>
+                    </span>
+                    <span class="ml-2">Following</span>
+                </a>
+                <a href="#" class="flex items-center p-2 rounded-md hover:bg-[#313338] text-[#B9BBBE] hover:text-white group">
+                    <span class="text-[#949BA4] group-hover:text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"></path></svg>
+                    </span>
+                    <span class="ml-2">Gaming</span>
+                </a>
+                
+                <!-- NEW: Monetization Section -->
+                <h2 class="text-[#949BA4] text-xs font-semibold uppercase px-2 pt-4">Store</h2>
+                <a href="#" class="flex items-center p-2 rounded-md hover:bg-[#313338] text-[#B9BBBE] hover:text-white group">
+                    <span class="text-[#949BA4] group-hover:text-white">
+                        <!-- Coin Icon -->
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM14 10H13V9C13 8.45 12.55 8 12 8C11.45 8 11 8.45 11 9V10H10C9.45 10 9 10.45 9 11C9 11.55 9.45 12 10 12H11V14H10C9.45 14 9 14.45 9 15C9 15.55 9.45 16 10 16H11V17C11 17.55 11.45 18 12 18C12.55 18 13 17.55 13 17V16H14C14.55 16 15 15.55 15 15C15 14.45 14.55 14 14 14V12H15C15.55 12 16 11.55 16 11C16 10.45 15.55 10 14 10Z"></path></svg>
+                    </span>
+                    <span class="ml-2">Get Coins</span>
+                </a>
+                <a href="#" class="flex items-center p-2 rounded-md hover:bg-[#313338] text-[#B9BBBE] hover:text-white group">
+                    <span class="text-[#949BA4] group-hover:text-white">
+                        <!-- Pro/Star Icon -->
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z"></path></svg>
+                    </span>
+                    <span class="ml-2">Get Disdee Pro</span>
+                </a>
+            </div>
+            
+            <!-- User Profile Bar -->
+            <footer class="h-14 bg-[#232428] p-2 flex items-center justify-between shrink-0">
+                <div class="flex items-center space-x-2 cursor-pointer group">
+                    <div class="w-8 h-8 rounded-full bg-gray-400 relative">
+                        <img src="https://placehold.co/32x32/7289DA/FFFFFF?text=GU" alt="Avatar" class="rounded-full">
+                        <div class="w-3 h-3 bg-[#23A55A] rounded-full absolute bottom-0 right-0 border-2 border-[#232428]"></div>
+                    </div>
+                    <div>
+                        <div class="text-sm font-semibold text-white">GuestUser</div>
+                        <div class="text-xs text-[#B9BBBE]">Online</div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2 text-[#B9BBBE]">
+                    <!-- Mic Icon -->
+                    <button class="hover:bg-[#2B2D31] p-1 rounded-md">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 14C13.66 14 15 12.66 15 11V3C15 1.34 13.66 0 12 0C10.34 0 9 1.34 9 3V11C9 12.66 10.34 14 12 14ZM10.8 3C10.8 2.56 11.36 2.2 11.8 2.2C12.24 2.2 12.6 2.56 12.6 3V11C12.6 11.44 12.24 11.8 11.8 11.8C11.36 11.8 10.8 11.44 10.8 11V3Z M17 11C17 14 14.41 16.44 11.4 16.9V20H12.6V22H9.4V20H10.6V16.9C7.59 16.44 5 14 5 11H7C7 13.76 9.24 16 12 16C14.76 16 17 13.76 17 11Z"></path></svg>
+                    </button>
+                    <!-- Settings Icon -->
+                    <button class="hover:bg-[#2B2D31] p-1 rounded-md" id="settings-button">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94C19.06 12.42 19 11.88 19 11.31C19 10.75 19.06 10.2 19.14 9.68L20.71 8.39C20.8 8.31 20.83 8.18 20.75 8.08L19.25 5.5C19.17 5.4 19.04 5.37 18.94 5.4L17.07 6.1C16.64 5.78 16.17 5.5 15.68 5.28L15.4 3.29C15.38 3.18 15.27 3.1 15.15 3.1H12.86C12.74 3.1 12.63 3.18 12.6 3.29L12.33 5.28C11.84 5.5 11.37 5.78 10.94 6.1L9.07 5.4C8.97 5.37 8.83 5.4 8.75 5.5L7.25 8.08C7.17 8.18 7.2 8.31 7.29 8.39L8.86 9.68C8.94 10.2 9 10.75 9 11.31C9 11.88 8.94 12.42 8.86 12.94L7.29 14.23C7.2 14.31 7.17 14.44 7.25 14.54L8.75 17.12C8.83 17.22 8.97 17.25 9.07 17.22L10.94 16.52C11.37 16.84 11.84 17.12 12.33 17.34L12.6 19.33C12.63 19.44 12.74 19.52 12.86 19.52H15.15C15.27 19.52 15.38 19.44 15.4 19.33L15.68 17.34C16.17 17.12 16.64 16.84 17.07 16.52L18.94 17.22C19.04 17.25 19.17 17.22 19.25 17.12L20.75 14.54C20.83 14.44 20.8 14.31 20.71 14.23L19.14 12.94ZM12 14.31C10.73 14.31 9.7 13.28 9.7 12C9.7 10.72 10.73 9.69 12 9.69C13.27 9.69 14.3 10.72 14.3 12C14.3 13.28 13.27 14.31 12 14.31Z"></path></svg>
+                    </button>
+                </div>
+            </footer>
+        </nav>
+
+        <!-- ======================================= -->
+        <!-- Mobile Header - Top Bar -->
+        <!-- Visible only on mobile (<md) -->
+        <!-- ======================================= -->
+        <header class="md:hidden h-12 bg-[#2B2D31] w-full fixed top-0 left-0 flex items-center justify-between p-4 z-20 shadow-md">
+            <h1 class="text-white font-bold text-xl">Disdee</h1>
+            <!-- Search Icon -->
+            <button class="text-[#B9BBBE] hover:text-white" id="mobile-search-button">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14H14.71L14.43 13.73C15.41 12.59 16 11.11 16 9.5C16 5.91 13.09 3 9.5 3C5.91 3 3 5.91 3 9.5C3 13.09 5.91 16 9.5 16C11.11 16 12.59 15.41 13.73 14.43L14 14.71V15.5L19 20.49L20.49 19L15.5 14ZM9.5 14C7.01 14 5 11.99 5 9.5C5 7.01 7.01 5 9.5 5C11.99 5 14 7.01 14 9.5C14 11.99 11.99 14 9.5 14Z"></path></svg>
+            </button>
+        </header>
+
+        <!-- ======================================= -->
+        <!-- Main Content Area (Feed + Chat) -->
+        <!-- pt-12 adds spacing for the fixed mobile header -->
+        <!-- ======================================= -->
+        <div class="flex-1 flex flex-row overflow-hidden pt-12 md:pt-0">
+            
+            <!-- Video Feed (Takes full width on mobile) -->
+            <main class="flex-1 md:flex-none md:max-w-sm lg:max-w-md w-full h-full flex flex-col bg-[#313338]">
+                <!-- Desktop Header for Feed (Hidden on mobile) -->
+                <header class="hidden md:flex h-12 shadow-md px-4 flex items-center justify-between shrink-0 border-b border-[#202225]">
+                    <div class="flex items-center space-x-2">
+                            <span class="text-[#949BA4] text-xl font-semibold">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M14 10H10V14H14V10ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z"></path></svg>
+                            </span>
+                            <h2 class="text-white font-bold text-lg">For You</h2>
+                    </div>
+                </header>
+                <!-- Scroller Container -->
+                <div id="video-feed" class="h-full w-full overflow-y-scroll snap-y snap-mandatory">
+                    <!-- Video items will be dynamically injected here -->
+                </div>
+            </main>
+
+            <!-- NEW: Chat Panel (Hidden on mobile) -->
+            <div id="chat-panel" class="hidden md:flex flex-col flex-1 bg-[#313338] border-l border-[#202225]">
+                <!-- Chat Header -->
+                <header class="h-12 shadow-md px-4 flex items-center justify-between shrink-0 border-b border-[#202225]">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[#949BA4] text-xl font-semibold">#</span>
+                        <h2 class="text-white font-bold text-lg">general</h2>
+                    </div>
+                    <div class="flex items-center space-x-3 text-[#B9BBBE]">
+                        <button class="hover:text-white" title="Pinned Messages">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17 3H7C5.9 3 5 3.9 5 5V19L12 16L19 19V5C19 3.9 18.1 3 17 3Z"></path></svg>
+                        </button>
+                        <button class="hover:text-white" title="Show Member List">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 13C17.66 13 19 11.66 19 10C19 8.34 17.66 7 16 7C14.34 7 13 8.34 13 10C13 11.66 14.34 13 16 13ZM8 13C9.66 13 11 11.66 11 10C11 8.34 9.66 7 8 7C6.34 7 5 8.34 5 10C5 11.66 6.34 13 8 13ZM16 15C13.34 15 8 16.34 8 19V21H24V19C24 16.34 18.66 15 16 15ZM8 15C5.34 15 0 16.34 0 19V21H11V19C11 16.34 9.66 15 8 15Z"></path></svg>
+                        </button>
+                    </div>
+                </header>
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="flex-1 p-3 space-y-4 overflow-y-auto">
+                    <!-- Welcome message -->
+                    <div class="p-3">
+                        <h3 class="text-white text-2xl font-bold">Welcome to #general!</h3>
+                        <p class="text-[#B9BBBE]">This is the start of the chat. Share a video from the feed to see it here!</p>
+                    </div>
+                    <!-- Messages will be injected here -->
+                </div>
+                <!-- Chat Input Box -->
+                <footer class="p-4 shrink-0">
+                    <div class="bg-[#383A40] rounded-lg flex items-center p-2">
+                        <input type="text" placeholder="Message #general" class="flex-1 bg-transparent text-white placeholder:text-[#949BA4] focus:outline-none px-2">
+                        <button class="text-[#B9BBBE] hover:text-white p-1">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM12 18C14.21 18 16 16.21 16 14C16 11.79 14.21 10 12 10C9.79 10 8 11.79 8 14C8 16.21 9.79 18 12 18ZM10 14C10 12.9 10.9 12 12 12C13.1 12 14 12.9 14 14C14 15.1 13.1 16 12 16C10.9 16 10 15.1 10 14Z"></path></svg>
+                        </button>
+                    </div>
+                </footer>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ======================================= -->
+    <!-- MODAL: Video Stats Modal -->
+    <!-- Full width on mobile, centered on desktop -->
+    <!-- ======================================= -->
+    <div id="video-stats-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <!-- Overlay -->
+        <div class="absolute inset-0 bg-black/70 modal-overlay opacity-0"></div>
+        
+        <!-- Modal Content -->
+        <div id="video-stats-content" class="bg-[#2B2D31] rounded-lg shadow-xl w-full max-w-md z-10 modal-content transform scale-95 opacity-0 relative mx-4">
+            
+            <h2 class="text-xl font-bold text-white mb-0 p-6 pb-4">Video Stats & Gifts</h2>
+
+            <!-- NEW: Tab Navigation -->
+            <nav id="video-stats-tabs" class="flex justify-around border-b border-[#3F4248] px-6">
+                <button data-tab="donate" class="flex-1 text-center px-4 py-3 font-semibold text-white border-b-2 border-[#5865F2] profile-tab-button active">
+                    Donate
+                </button>
+                <button data-tab="top" class="flex-1 text-center px-4 py-3 font-semibold text-[#949BA4] border-b-2 border-transparent hover:text-white profile-tab-button">
+                    Top Contributors
+                </button>
+                <button data-tab="collection" class="flex-1 text-center px-4 py-3 font-semibold text-[#949BA4] border-b-2 border-transparent hover:text-white profile-tab-button">
+                    Collection
+                </button>
+            </nav>
+
+            <!-- NEW: Tab Content -->
+            <div id="video-stats-tab-content" class="p-6 max-h-64 overflow-y-auto">
+                <!-- Donate Pane (Original Gift Modal Content) -->
+                <div id="video-stats-tab-donate" class="active">
+                    <h3 class="text-lg font-semibold text-white mb-4">Send a Gift</h3>
+                    <p class="text-[#B9BBBE] mb-6 text-sm">Show your appreciation for this video by sending some coins!</p>
+                    <div class="space-y-3 mb-6">
+                        <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 gift-option" data-amount="10">
+                            <span class="font-semibold text-white">🎁 10 Coins</span>
+                        </button>
+                        <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 gift-option" data-amount="50">
+                            <span class="font-semibold text-white">💝 50 Coins</span>
+                        </button>
+                        <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 gift-option" data-amount="100">
+                            <span class="font-semibold text-white">💎 100 Coins</span>
+                        </button>
+                    </div>
+                    <div class="flex justify-end">
+                        <button id="video-stats-send-button" class="w-full px-4 py-2 bg-[#23A55A] text-white font-semibold rounded-md hover:bg-[#1E8449] transition-colors">
+                            Send Gift
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top Contributors Pane -->
+                <div id="video-stats-tab-top">
+                    <h3 class="text-lg font-semibold text-white mb-4">Top Video Contributors</h3>
+                    <ol id="video-stats-top-list" class="space-y-3">
+                        <!-- JS will populate this -->
+                    </ol>
+                </div>
+
+                <!-- Collection Pane -->
+                <div id="video-stats-tab-collection">
+                    <h3 class="text-lg font-semibold text-white mb-4">Video Gift Collection</h3>
+                    <div id="video-stats-collection-grid" class="grid grid-cols-4 gap-4 text-center">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Close Button -->
+            <button class="absolute top-4 right-4 text-[#B9BBBE] hover:text-white modal-close-button">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- ======================================= -->
+    <!-- FIXED: RE-ADDED Comment Modal -->
+    <!-- Full width on mobile, centered on desktop -->
+    <!-- ======================================= -->
+    <div id="comment-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black/70 modal-overlay opacity-0"></div>
+        <div class="bg-[#2B2D31] rounded-lg shadow-xl w-full max-w-sm p-6 z-10 modal-content transform scale-95 opacity-0 mx-4">
+            <h2 class="text-xl font-bold text-white mb-4">Comments (3)</h2>
+            <!-- Mock Comments -->
+            <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                <div class="flex space-x-2">
+                    <img src="https://placehold.co/32x32/EB459E/FFFFFF?text=A" alt="Avatar" class="w-8 h-8 rounded-full">
+                    <div>
+                        <span class="font-semibold text-sm text-white">@awesome_user</span>
+                        <p class="text-sm text-[#DCDDDE]">This is insane! 🤯</p>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <img src="https://placehold.co/32x32/23A55A/FFFFFF?text=B" alt="Avatar" class="w-8 h-8 rounded-full">
+                    <div>
+                        <span class="font-semibold text-sm text-white">@another_viewer</span>
+                        <p class="text-sm text-[#DCDDDE]">How did you even do that?!</p>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <img src="https://placehold.co/32x32/F0B232/313338?text=C" alt="Avatar" class="w-8 h-8 rounded-full">
+                    <div>
+                        <span class="font-semibold text-sm text-white">@gamer_god</span>
+                        <p class="text-sm text-[#DCDDDE]">GGs!</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Comment Input -->
+            <div class="flex space-x-2">
+                <input type="text" placeholder="Add a comment..." class="flex-1 bg-[#3F4248] border border-[#202225] rounded-md p-2 text-sm text-white placeholder:text-[#949BA4]">
+                <!-- FIXED: Added ID for robust selection -->
+                <button id="comment-post-button" class="px-4 py-2 bg-[#5865F2] text-white font-semibold rounded-md hover:bg-[#4752C4] transition-colors">Post</button>
+            </div>
+            <button class="absolute top-4 right-4 text-[#B9BBBE] hover:text-white modal-close-button">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ======================================= -->
+    <!-- MODAL: Share Modal -->
+    <!-- Full width on mobile, centered on desktop -->
+    <!-- ======================================= -->
+    <div id="share-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black/70 modal-overlay opacity-0"></div>
+        <div class="bg-[#2B2D31] rounded-lg shadow-xl w-full max-w-sm p-6 z-10 modal-content transform scale-95 opacity-0 mx-4">
+            <h2 class="text-xl font-bold text-white mb-6">Share to Server...</h2>
+            
+            <!-- Share Options -> Replaced with Server List -->
+            <div id="share-server-list" class="space-y-2 mb-6 max-h-64 overflow-y-auto">
+                <!-- Mock Server Item -->
+                <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 flex items-center space-x-3 share-to-server-button">
+                    <img src="https://placehold.co/32x32/313338/FFFFFF?text=G" alt="Server" class="w-8 h-8 rounded-full">
+                    <span class="font-semibold text-white">Gaming Server</span>
+                </button>
+                <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 flex items-center space-x-3 share-to-server-button">
+                    <img src="https://placehold.co/32x32/313338/FFFFFF?text=M" alt="Server" class="w-8 h-8 rounded-full">
+                    <span class="font-semibold text-white">Music Hub</span>
+                </button>
+                <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 flex items-center space-x-3 share-to-server-button">
+                    <img src="https://placehold.co/32x32/313338/FFFFFF?text=D" alt="Server" class="w-8 h-8 rounded-full">
+                    <span class="font-semibold text-white">Developer Den</span>
+                </button>
+                <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 flex items-center space-x-3 share-to-server-button">
+                    <img src="httpsa://placehold.co/32x32/313338/FFFFFF?text=A" alt="Server" class="w-8 h-8 rounded-full">
+                    <span class="font-semibold text-white">Art Hangout</span>
+                </button>
+            </div>
+            
+            <!-- Cancel Button -->
+            <button class="w-full p-2 bg-transparent text-[#DCDDDE] rounded-md hover:bg-[#3F4248] transition-colors modal-close-button">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- ======================================= -->
+    <!-- NEW: Creator Profile Modal -->
+    <!-- Full width on mobile, centered on desktop -->
+    <!-- ======================================= -->
+    <div id="profile-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-black/70 modal-overlay opacity-0"></div>
+        <!-- CHANGED: Made modal wider -->
+        <div class="bg-[#2B2D31] rounded-lg shadow-xl w-full max-w-md z-10 modal-content transform scale-95 opacity-0 relative mx-4">
+            
+            <!-- Profile Header -->
+            <div class="flex flex-col items-center p-6">
+                <img id="profile-avatar" src="https://placehold.co/80x80/7289DA/FFFFFF?text=GU" alt="Avatar" class="w-20 h-20 rounded-full mb-4 border-4 border-[#3F4248]">
+                <h2 id="profile-username" class="text-2xl font-bold text-white">@username</h2>
+                <button class="mt-4 px-6 py-2 bg-[#5865F2] text-white font-semibold rounded-md hover:bg-[#4752C4] transition-colors">
+                    Follow
+                </button>
+            </div>
+
+            <!-- NEW: Tab Navigation -->
+            <nav id="profile-tabs" class="flex justify-around border-b border-[#3F4248]">
+                <button data-tab="donate" class="flex-1 text-center px-4 py-3 font-semibold text-white border-b-2 border-[#5865F2] profile-tab-button active">
+                    Donate
+                </button>
+                <button data-tab="top" class="flex-1 text-center px-4 py-3 font-semibold text-[#949BA4] border-b-2 border-transparent hover:text-white profile-tab-button">
+                    Top Contributors
+                </button>
+                <button data-tab="collection" class="flex-1 text-center px-4 py-3 font-semibold text-[#949BA4] border-b-2 border-transparent hover:text-white profile-tab-button">
+                    Collection
+                </button>
+            </nav>
+
+            <!-- NEW: Tab Content -->
+            <div id="profile-tab-content" class="p-6 max-h-64 overflow-y-auto">
+                <!-- Donate Pane -->
+                <div id="profile-tab-donate" class="active">
+                    <h3 class="text-lg font-semibold text-white mb-4">Send a Gift</h3>
+                    <div class="space-y-3 mb-6">
+                        <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 gift-option" data-amount="10">
+                            <span class="font-semibold text-white">🎁 10 Coins</span>
+                        </button>
+                        <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 gift-option" data-amount="50">
+                            <span class="font-semibold text-white">💝 50 Coins</span>
+                        </button>
+                        <button class="w-full text-left p-3 bg-[#3F4248] hover:bg-[#4a4d53] rounded-md transition-all duration-200 gift-option" data-amount="100">
+                            <span class="font-semibold text-white">💎 100 Coins</span>
+                        </button>
+                    </div>
+                    <div class="flex justify-end">
+                        <button id="profile-send-gift-button" class="w-full px-4 py-2 bg-[#23A55A] text-white font-semibold rounded-md hover:bg-[#1E8449] transition-colors">
+                            Send Gift
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Top Contributors Pane -->
+                <div id="profile-tab-top">
+                    <h3 class="text-lg font-semibold text-white mb-4">Top Contributors</h3>
+                    <ol id="profile-top-list" class="space-y-3">
+                        <!-- JS will populate this -->
+                        <!-- Example:
+                        <li class="flex items-center justify-between p-3 bg-[#3F4248] rounded-md">
+                            <div class="flex items-center space-x-3">
+                                <span class="text-xl">🥇</span>
+                                <span class="font-semibold text-white">Alex</span>
+                            </div>
+                            <span class="text-sm text-[#B9BBBE]">900 Coins</span>
+                        </li>
+                        -->
+                    </ol>
+                </div>
+
+                <!-- Collection Pane -->
+                <div id="profile-tab-collection">
+                    <h3 class="text-lg font-semibold text-white mb-4">Gift Collection</h3>
+                    <div id="profile-collection-grid" class="grid grid-cols-4 gap-4 text-center">
+                        <!-- JS will populate this -->
+                        <!-- Example:
+                        <div class="flex flex-col items-center p-3 bg-[#3F4248] rounded-md">
+                            <span class="text-3xl">💎</span>
+                            <span class="text-sm font-semibold text-white mt-1">12</span>
+                        </div>
+                        -->
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Close Button -->
+            <button class="absolute top-4 right-4 text-[#B9BBBE] hover:text-white modal-close-button">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ======================================= -->
+    <!-- JavaScript Logic -->
+    <!-- ======================================= -->
+    <script>
+        // Mock data for the video feed
+        const mockVideos = [
+            {
+                id: 1,
+                username: '@discord_gamer',
+                avatar: 'https://placehold.co/80x80/5865F2/FFFFFF?text=DG',
+                description: 'Insane clutch in Valorant! 🤯 #valorant #gaming #disdee',
+                likes: 12400,
+                comments: 345,
+                shares: 112,
+                gifts: 42,
+                placeholder: 'https://placehold.co/400x700/5865F2/FFFFFF?text=Gaming+Clip',
+                // NEW DATA
+                topContributors: [
+                    { name: 'Alex', amount: 900 },
+                    { name: 'Ihor', amount: 500 },
+                    { name: 'Anastasia', amount: 200 }
+                ],
+                giftCollection: [
+                    { icon: '💎', count: 12 },
+                    { icon: '💝', count: 30 },
+                    { icon: '🎁', count: 88 }
+                ]
+            },
+            {
+                id: 2,
+                username: '@art_studio',
+                avatar: 'https://placehold.co/80x80/23A55A/FFFFFF?text=AS',
+                description: 'Speed-painting a new server icon. What do you think? 🎨',
+                likes: 8200,
+                comments: 150,
+                shares: 45,
+                gifts: 88,
+                placeholder: 'https://placehold.co/400x700/23A55A/FFFFFF?text=Art+Timelapse',
+                // NEW DATA
+                topContributors: [
+                    { name: 'Bob', amount: 1200 },
+                    { name: 'Charlie', amount: 300 },
+                    { name: 'David', amount: 50 }
+                ],
+                giftCollection: [
+                    { icon: '🎨', count: 5 },
+                    { icon: '💎', count: 20 },
+                    { icon: '💝', count: 10 }
+                ]
+            },
+            {
+                id: 3,
+                username: '@code_master',
+                avatar: 'https://placehold.co/80x80/F0B232/313338?text=CM',
+                description: 'Building a new Discord bot with Python. #coding #python #bot',
+                likes: 21500,
+                comments: 802,
+                shares: 301,
+                gifts: 230,
+                placeholder: 'https://placehold.co/400x700/F0B232/313338?text=Coding+Demo',
+                // NEW DATA
+                topContributors: [
+                    { name: 'Eve', amount: 1500 },
+                    { name: 'Frank', amount: 1000 },
+                    { name: 'Grace', amount: 100 }
+                ],
+                giftCollection: [
+                    { icon: '💡', count: 30 },
+                    { icon: '💎', count: 40 },
+                    { icon: '🚀', count: 5 }
+                ]
+            },
+            {
+                id: 4,
+                username: '@music_mixes',
+                avatar: 'https://placehold.co/80x80/EB459E/FFFFFF?text=MM',
+                description: 'New lofi mix for your study sessions. Link in bio! 🎧',
+                likes: 5600,
+                comments: 98,
+                shares: 22,
+                gifts: 12,
+                placeholder: 'https://placehold.co/400x700/EB459E/FFFFFF?text=Lofi+Vibes',
+                // NEW DATA
+                topContributors: [
+                    { name: 'Heidi', amount: 100 },
+                    { name: 'Ivan', amount: 50 },
+                    { name: 'Judy', amount: 10 }
+                ],
+                giftCollection: [
+                    { icon: '🎧', count: 10 },
+                    { icon: '🎁', count: 5 }
+                ]
+            }
+        ];
+
+        // NEW: Mock data for Creator Profiles
+        const mockCreators = {
+            '@discord_gamer': {
+                avatar: 'https://placehold.co/80x80/5865F2/FFFFFF?text=DG',
+                topContributors: [
+                    { name: 'GlobalAlex', amount: 9000 },
+                    { name: 'GlobalIhor', amount: 5000 },
+                    { name: 'GlobalAna', amount: 2000 }
+                ],
+                giftCollection: [
+                    { icon: '💎', count: 120 },
+                    { icon: '💝', count: 300 },
+                    { icon: '🎁', count: 808 },
+                    { icon: '🚀', count: 15 }
+                ]
+            },
+            '@art_studio': {
+                avatar: 'https://placehold.co/80x80/23A55A/FFFFFF?text=AS',
+                topContributors: [
+                    { name: 'GlobalBob', amount: 12000 },
+                    { name: 'GlobalCharlie', amount: 3000 },
+                    { name: 'GlobalDavid', amount: 500 }
+                ],
+                giftCollection: [
+                    { icon: '🎨', count: 50 },
+                    { icon: '💎', count: 200 },
+                    { icon: '💝', count: 100 }
+                ]
+            },
+            '@code_master': {
+                avatar: 'https://placehold.co/80x80/F0B232/313338?text=CM',
+                topContributors: [
+                    { name: 'GlobalEve', amount: 15000 },
+                    { name: 'GlobalFrank', amount: 10000 },
+                    { name: 'GlobalGrace', amount: 1000 }
+                ],
+                giftCollection: [
+                    { icon: '💡', count: 300 },
+                    { icon: '💎', count: 400 },
+                    { icon: '🚀', count: 50 }
+                ]
+            },
+            '@music_mixes': {
+                avatar: 'https://placehold.co/80x80/EB459E/FFFFFF?text=MM',
+                topContributors: [
+                    { name: 'GlobalHeidi', amount: 1000 },
+                    { name: 'GlobalIvan', amount: 500 },
+                    { name: 'GlobalJudy', amount: 100 }
+                ],
+                giftCollection: [
+                    { icon: '🎧', count: 100 },
+                    { icon: '🎁', count: 50 }
+                ]
+            }
+        };
+
+        // SVGs for UI Icons
+        const icons = {
+            heart: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z"></path></svg>`,
+            comment: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H18L22 22V4C22 2.9 21.1 2 20 2ZM18 14H6V12H18V14ZM18 11H6V9H18V11ZM18 8H6V6H18V8Z"></path></svg>`,
+            share: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M18 16.08C17.24 16.08 16.56 16.35 16.04 16.85L8.91 12.7C8.96 12.47 9 12.24 9 12C9 11.76 8.96 11.53 8.91 11.3L16.04 7.15C16.56 7.65 17.24 7.92 18 7.92C19.66 7.92 21 6.58 21 4.96C21 3.34 19.66 2 18 2C16.34 2 15 3.34 15 4.96C15 5.2 15.04 5.43 15.09 5.66L7.96 9.81C7.44 9.31 6.76 9.04 6 9.04C4.34 9.04 3 10.38 3 12C3 13.62 4.34 14.96 6 14.96C6.76 14.96 7.44 14.69 7.96 14.19L15.09 18.34C15.04 18.57 15 18.8 15 19.04C15 20.66 16.34 22 18 22C19.66 22 21 20.66 21 19.04C21 17.42 19.66 16.08 18 16.08Z"></path></svg>`,
+            gift: `<svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M20 6H4C2.9 6 2 6.9 2 8V20C2 21.1 2.9 22 4 22H20C21.1 22 22 21.1 22 20V8C22 6.9 21.1 6 20 6ZM20 20H4V8H20V20ZM12 2C10.9 2 10 2.9 10 4V6H14V4C14 2.9 13.1 2 12 2Z"></path></svg>`
+        };
+        
+        // --- NEW: Global state for sharing ---
+        let videoToShare = null;
+        let firstMessage = true; // To clear welcome message
+
+        // Function to format large numbers
+        function formatNumber(num) {
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num;
+        }
+
+        // Function to create a single video element
+        function createVideoElement(video) {
+            const videoContainer = document.createElement('div');
+            videoContainer.className = 'h-full w-full flex-shrink-0 snap-start relative flex items-center justify-center';
+            videoContainer.dataset.videoId = video.id; // Store video ID
+            
+            // Background image as video placeholder
+            videoContainer.innerHTML = `
+                <!-- Video Placeholder -->
+                <img src="${video.placeholder}" class="absolute inset-0 w-full h-full object-cover" alt="Video placeholder">
+                
+                <!-- Gradient Overlay for text visibility -->
+                <div class="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-black/70 to-transparent"></div>
+                <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent"></div>
+
+                <!-- Play Button Overlay -->
+                <div class="absolute text-white/50 opacity-50">
+                    <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5V19L19 12L8 5Z"></path></svg>
+                </div>
+
+                <!-- Video Info (Bottom Left) -->
+                <div class="absolute bottom-4 left-4 text-white z-10 max-w-xs">
+                    <!-- NEW: Top Contributor Badge -->
+                    ${generateTopContributorBadge(video)}
+                    <button class="font-bold text-lg text-left hover:underline profile-button">${video.username}</button>
+                    <p class="text-sm mt-1">${video.description}</p>
+                </div>
+                
+                <!-- MODIFIED: Action Buttons (Right Side) -->
+                <div class="absolute right-3 bottom-4 md:top-1/2 md:-translate-y-1/2 md:bottom-auto flex flex-col space-y-5 items-center text-white z-10
+                    p-2 rounded-xl bg-black/30 md:p-0 md:bg-transparent">
+                    <button class="flex flex-col items-center group like-button" data-likes="${video.likes}">
+                        <span classs="like-icon-wrapper">${icons.heart}</span>
+                        <span class="text-sm font-semibold mt-1 like-count">${formatNumber(video.likes)}</span>
+                    </button>
+                    <button class="flex flex-col items-center comment-button">
+                        ${icons.comment}
+                        <span class="text-sm font-semibold mt-1">${formatNumber(video.comments)}</span>
+                    </button>
+                    <button class="flex flex-col items-center share-button">
+                        ${icons.share}
+                        <span class="text-sm font-semibold mt-1">${formatNumber(video.shares)}</span>
+                    </button>
+                    <!-- NEW: Gift Button -->
+                    <button class="flex flex-col items-center group gift-button" data-gifts="${video.gifts}">
+                        ${icons.gift}
+                        <span class="text-sm font-semibold mt-1 gift-count">${formatNumber(video.gifts)}</span>
+                    </button>
+                </div>
+            `;
+            
+            return videoContainer;
+        }
+
+        // NEW: Helper function for badge
+        function generateTopContributorBadge(video) {
+            const topVidContributor = video.topContributors[0];
+            if (topVidContributor) {
+                return `
+                <div class="mb-1">
+                    <span class="flex items-center space-x-1 text-xs bg-black/50 px-2 py-0.5 rounded-full w-fit">
+                        <span>🥇</span>
+                        <span>Top: ${topVidContributor.name}</span>
+                    </span>
+                </div>`;
+            }
+            return ''; // Return empty string if no top contributor
+        }
+
+        // Function to populate the feed
+        function renderFeed() {
+            const feedContainer = document.getElementById('video-feed');
+            mockVideos.forEach(video => {
+                feedContainer.appendChild(createVideoElement(video));
+            });
+        }
+        
+        // --- FIXED: Re-added setupLikeButtons ---
+        function setupLikeButtons() {
+            document.querySelectorAll('.like-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const iconWrapper = button.querySelector('svg');
+                    const countSpan = button.querySelector('.like-count');
+                    let currentLikes = parseInt(button.dataset.likes, 10);
+                    
+                    if (button.classList.contains('liked')) {
+                        // Unlike
+                        button.classList.remove('liked');
+                        button.classList.remove('text-red-500');
+                        currentLikes -= 1;
+                    } else {
+                        // Like
+                        button.classList.add('liked');
+                        button.classList.add('text-red-500');
+                        iconWrapper.classList.add('animate-like-pulse');
+                        currentLikes += 1;
+                        
+                        iconWrapper.addEventListener('animationend', () => {
+                            iconWrapper.classList.remove('animate-like-pulse');
+                        }, { once: true });
+                    }
+                    
+                    button.dataset.likes = currentLikes;
+                    countSpan.textContent = formatNumber(currentLikes);
+                });
+            });
+        }
+
+        // --- NEW: Generic Modal Logic ---
+        let activeModal = null;
+        let activeGiftButton = null; // Still need this for gift logic
+        const profileModal = document.getElementById('profile-modal'); // NEW: Get profile modal
+        const videoStatsModal = document.getElementById('video-stats-modal'); // NEW: Get video stats modal
+
+        function openModal(modalId) {
+            if (activeModal) {
+                closeModal(); // Close any open modal
+            }
+            
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            
+            activeModal = modal;
+            const overlay = modal.querySelector('.modal-overlay');
+            const content = modal.querySelector('.modal-content');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                if(overlay) overlay.classList.remove('opacity-0');
+                if(content) content.classList.remove('opacity-0', 'scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            if (!activeModal) return;
+            
+            const modal = activeModal;
+            const overlay = modal.querySelector('.modal-overlay');
+            const content = modal.querySelector('.modal-content');
+
+            if(overlay) overlay.classList.add('opacity-0');
+            if(content) content.classList.add('opacity-0', 'scale-95');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                
+                // Reset gift modal specifics
+                if (modal.id === 'video-stats-modal') {
+                    modal.querySelectorAll('.gift-option').forEach(opt => opt.classList.remove('bg-[#5865F2]'));
+                    selectedGiftAmount = 0;
+                    activeGiftButton = null;
+                }
+                // NEW: Reset profile modal gifts
+                if (modal.id === 'profile-modal') {
+                    modal.querySelectorAll('.gift-option').forEach(opt => opt.classList.remove('bg-[#5865F2]'));
+                    selectedProfileGiftAmount = 0;
+                }
+                activeModal = null;
+            }, 200);
+        }
+
+        function setupModalCloseButtons() {
+            document.querySelectorAll('.modal-overlay, .modal-close-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeModal();
+                });
+            });
+            // We no longer need the specific #gift-cancel-button listener
+            // It's covered by modal-close-button (if we add the class) or we find its new ID.
+            // Let's add a listener for the *new* cancel button if it exists.
+            const videoStatsCancel = document.getElementById('video-stats-cancel-button');
+            if(videoStatsCancel) {
+                videoStatsCancel.addEventListener('click', closeModal);
+            }
+        }
+        // --- End Generic Modal Logic ---
+
+
+        // --- UPDATED: Gift Modal Logic (now Video Stats Modal) ---
+        let selectedGiftAmount = 0;
+
+        function setupGiftButtons() {
+            // Use event delegation on the feed container
+            const feedContainer = document.getElementById('video-feed');
+            feedContainer.addEventListener('click', (e) => {
+                const giftButton = e.target.closest('.gift-button');
+                if (!giftButton) return;
+
+                activeGiftButton = giftButton; // Store which button was clicked
+                
+                // Find the video data
+                const videoContainer = giftButton.closest('.snap-start');
+                const videoId = parseInt(videoContainer.dataset.videoId, 10);
+                const video = mockVideos.find(v => v.id === videoId);
+                if (!video) return;
+
+                // --- Populate the Video Stats Modal ---
+                populateStatsLists(video, 'video-stats');
+                
+                // Reset tabs to default ("Donate")
+                resetTabs('video-stats-tabs', 'video-stats-tab-content', 'video-stats-tab-donate');
+                
+                // Open the modal
+                openModal('video-stats-modal');
+            });
+
+            
+            // Note: This query selects gift options from BOTH modals.
+            // This is OK because they share functionality.
+            const giftOptions = document.querySelectorAll('.gift-option');
+            giftOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    // Deselect options *only* within the same modal
+                    const parentModal = option.closest('.modal-content');
+                    parentModal.querySelectorAll('.gift-option').forEach(opt => opt.classList.remove('bg-[#5865F2]'));
+                    
+                    option.classList.add('bg-[#5865F2]');
+                    
+                    // Update the correct amount variable based on which modal it is
+                    if (parentModal.closest('#video-stats-modal')) {
+                        selectedGiftAmount = parseInt(option.dataset.amount, 10);
+                    } else if (parentModal.closest('#profile-modal')) {
+                        selectedProfileGiftAmount = parseInt(option.dataset.amount, 10);
+                    }
+                });
+            });
+
+            // Listener for the "Send" button in the VIDEO STATS modal
+            document.getElementById('video-stats-send-button').addEventListener('click', () => {
+                if (selectedGiftAmount > 0 && activeGiftButton) {
+                    // Update the gift count on the button
+                    const countSpan = activeGiftButton.querySelector('.gift-count');
+                    let currentGifts = parseInt(activeGiftButton.dataset.gifts, 10);
+                    currentGifts += selectedGiftAmount;
+                    
+                    activeGiftButton.dataset.gifts = currentGifts;
+                    countSpan.textContent = formatNumber(currentGifts);
+                    
+                    closeModal();
+                } else {
+                    // Maybe show a small error
+                    console.log("No amount selected");
+                }
+            });
+        }
+
+        // --- FIXED: UPDATED Comment Modal Logic ---
+        function setupCommentButtons() {
+            // Use event delegation for opening the modal
+            const feedContainer = document.getElementById('video-feed');
+            feedContainer.addEventListener('click', (e) => {
+                const commentButton = e.target.closest('.comment-button');
+                if (!commentButton) return;
+                
+                openModal('comment-modal');
+            });
+
+            // Logic for posting a comment (mock)
+            const postButton = document.getElementById('comment-post-button');
+            if (postButton) { // Add check to prevent error
+                postButton.addEventListener('click', () => {
+                    const input = document.querySelector('#comment-modal input');
+                    if (input && input.value) { // Add check for input
+                        console.log("New comment posted:", input.value);
+                        input.value = '';
+                        // In a real app, you'd add the comment to the list
+                        closeModal();
+                    }
+                });
+            } else {
+                console.error("Could not find comment post button.");
+            }
+        }
+
+        // --- NEW: Send to Chat Function ---
+        function sendVideoToChat(video) {
+            if (!video) return;
+
+            const chatMessages = document.getElementById('chat-messages');
+            if (firstMessage) {
+                chatMessages.innerHTML = ''; // Clear welcome message
+                firstMessage = false;
+            }
+
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const messageEl = document.createElement('div');
+            messageEl.className = 'flex space-x-3 p-3 hover:bg-[#2e3035] rounded-md';
+            
+            // This innerHTML creates the entire chat message, including the "Reel" embed
+            messageEl.innerHTML = `
+                <img src="https://placehold.co/40x40/7289DA/FFFFFF?text=GU" alt="Avatar" class="w-10 h-10 rounded-full flex-shrink-0">
+                <div>
+                    <div class="flex items-baseline space-x-2">
+                        <span class="text-white font-semibold">GuestUser</span>
+                        <span class="text-[#949BA4] text-xs">Today at ${time}</span>
+                    </div>
+                    <!-- This is the "Reel" Embed -->
+                    <div class="mt-2 bg-[#2B2D31] rounded-lg overflow-hidden max-w-xs border border-[#202225] shadow-md">
+                        <div class="p-3">
+                            <span class="text-white font-semibold text-sm">${video.username}</span>
+                            <p class="text-[#DCDDDE] text-sm mt-1">${video.description}</p>
+                        </div>
+                        <img src="${video.placeholder}" alt="Video preview" class="w-full h-auto object-cover bg-[#202225]">
+                        <div class="p-3">
+                            <button class="w-full bg-[#5865F2] text-white font-semibold rounded-md p-2 text-sm hover:bg-[#4752C4] transition-colors">
+                                Watch Video
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to bottom
+        }
+
+        // --- MODIFIED: Share Button Logic ---
+        function setupShareButtons() {
+            // FIXED: Use event delegation
+            const feedContainer = document.getElementById('video-feed');
+            feedContainer.addEventListener('click', (e) => {
+                const shareButton = e.target.closest('.share-button');
+                if (!shareButton) return;
+
+                // Find the video data from the clicked button
+                const videoContainer = shareButton.closest('.snap-start');
+                const videoId = parseInt(videoContainer.dataset.videoId, 10);
+                videoToShare = mockVideos.find(v => v.id === videoId);
+                
+                // Open the share modal
+                openModal('share-modal');
+            });
+        }
+
+        // --- MODIFIED: Logic for the *new* share modal servers ---
+        function setupShareServerLogic() {
+            document.querySelectorAll('#share-server-list .share-to-server-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const serverName = button.querySelector('.font-semibold').textContent;
+                    console.log(`Sharing to server: ${serverName}...`);
+                    
+                    // Send the stored video to the chat
+                    sendVideoToChat(videoToShare);
+                    
+                    closeModal();
+                    videoToShare = null; // Clear the stored video
+                });
+            });
+        }
+
+        // --- UPDATED: Profile Modal Logic ---
+        function openProfileModal(video) {
+            if (!video || !video.username) return;
+            
+            // Get CREATOR level data
+            const creator = mockCreators[video.username];
+            if (!creator) {
+                console.error("No creator data found for:", video.username);
+                return;
+            }
+
+            // Populate profile modal header
+            document.getElementById('profile-avatar').src = creator.avatar;
+            document.getElementById('profile-username').textContent = video.username;
+            
+            // Store username for gift logic
+            profileModal.dataset.username = video.username;
+
+            // --- Populate the Profile Modal ---
+            populateStatsLists(creator, 'profile');
+            
+            // Reset tabs to default ("Donate")
+            resetTabs('profile-tabs', 'profile-tab-content', 'profile-tab-donate');
+
+            openModal('profile-modal');
+        }
+
+        // NEW: Helper function to populate stats lists for either modal
+        function populateStatsLists(data, modalPrefix) {
+            const medals = ['🥇', '🥈', '🥉'];
+            const topList = document.getElementById(`${modalPrefix}-top-list`);
+            
+            // Populate Top Contributors
+            topList.innerHTML = ''; // Clear old list
+            if (data.topContributors && data.topContributors.length > 0) {
+                data.topContributors.forEach((user, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between p-3 bg-[#3F4248] rounded-md';
+                    li.innerHTML = `
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xl w-6 text-center">${medals[index] || '•'}</span>
+                            <span class="font-semibold text-white">${user.name}</span>
+                        </div>
+                        <span class="text-sm text-[#B9BBBE]">${formatNumber(user.amount)} Coins</span>
+                    `;
+                    topList.appendChild(li);
+                });
+            } else {
+                topList.innerHTML = '<p class="text-[#949BA4]">Be the first to contribute!</p>';
+            }
+
+            // Populate Gift Collection
+            const collectionGrid = document.getElementById(`${modalPrefix}-collection-grid`);
+            collectionGrid.innerHTML = ''; // Clear old grid
+            if (data.giftCollection && data.giftCollection.length > 0) {
+                data.giftCollection.forEach(gift => {
+                    const div = document.createElement('div');
+                    div.className = 'flex flex-col items-center p-3 bg-[#3F4248] rounded-md';
+                    div.innerHTML = `
+                        <span class="text-3xl">${gift.icon}</span>
+                        <span class="text-sm font-semibold text-white mt-1">${formatNumber(gift.count)}</span>
+                    `;
+                    collectionGrid.appendChild(div);
+                });
+            } else {
+                collectionGrid.innerHTML = '<p class="text-[#949BA4] col-span-4">No gifts received yet.</p>';
+            }
+        }
+
+        // NEW: Helper function to reset tabs
+        function resetTabs(tabsId, contentId, defaultPaneId) {
+            document.querySelectorAll(`#${tabsId} .profile-tab-button`).forEach(btn => {
+                btn.classList.remove('active', 'text-white', 'border-[#5865F2]');
+                btn.classList.add('text-[#949BA4]', 'border-transparent');
+            });
+            const defaultTab = document.querySelector(`#${tabsId} button[data-tab="donate"]`);
+            if (defaultTab) {
+                defaultTab.classList.add('active', 'text-white', 'border-[#5865F2]');
+                defaultTab.classList.remove('text-[#949BA4]', 'border-transparent');
+            }
+            
+            document.querySelectorAll(`#${contentId} > div`).forEach(pane => {
+                pane.classList.remove('active');
+            });
+            const defaultPane = document.getElementById(defaultPaneId);
+            if (defaultPane) {
+                defaultPane.classList.add('active');
+            }
+        }
+
+        function setupProfileButtons() {
+            // Use event delegation on the feed container
+            const feedContainer = document.getElementById('video-feed');
+            feedContainer.addEventListener('click', (e) => {
+                const profileButton = e.target.closest('.profile-button');
+                if (!profileButton) return;
+
+                const videoContainer = profileButton.closest('.snap-start');
+                const videoId = parseInt(videoContainer.dataset.videoId, 10);
+                const video = mockVideos.find(v => v.id === videoId);
+                
+                openProfileModal(video);
+            });
+        }
+
+        let selectedProfileGiftAmount = 0;
+
+        function setupProfileGiftLogic() {
+            // This logic is now handled inside setupGiftButtons()
+            // We just need the click handler for the send button
+            document.getElementById('profile-send-gift-button').addEventListener('click', () => {
+                if (selectedProfileGiftAmount > 0) {
+                    const username = profileModal.dataset.username;
+                    console.log(`Sent ${selectedProfileGiftAmount} coins to ${username}!`);
+                    
+                    // Here you would update a database. For demo, just close.
+                    // You could also show a success message.
+                    
+                    closeModal();
+                } else {
+                    console.log("No profile gift amount selected");
+                }
+            });
+        }
+
+        // --- NEW: Generic Tab Switching Logic ---
+        function setupTabLogic(tabsId, contentId) {
+            const tabs = document.querySelectorAll(`#${tabsId} .profile-tab-button`);
+            const panes = document.querySelectorAll(`#${contentId} > div`);
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabTarget = tab.dataset.tab;
+                    const paneId = `${contentId.replace('-content', '')}-${tabTarget}`;
+
+                    // Update tab styles
+                    tabs.forEach(t => {
+                        t.classList.remove('active', 'text-white', 'border-[#5865F2]');
+                        t.classList.add('text-[#949BA4]', 'border-transparent');
+                    });
+                    tab.classList.add('active', 'text-white', 'border-[#5865F2]');
+                    tab.classList.remove('text-[#949BA4]', 'border-transparent');
+
+                    // Update pane visibility
+                    panes.forEach(pane => {
+                        if (pane.id === paneId) {
+                            pane.classList.add('active');
+                        } else {
+                            pane.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        }
+
+
+        // --- NEW: Sidebar Navigation Logic ---
+        function setupSidebarLinks() {
+            const links = document.querySelectorAll('#sidebar-nav a');
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent page jump
+                    // Remove active from all
+                    links.forEach(l => {
+                        l.classList.remove('bg-[#3F4248]', 'text-white');
+                        l.classList.add('text-[#B9BBBE]', 'hover:text-white', 'hover:bg-[#313338]');
+                    });
+                    // Add active to clicked
+                    link.classList.add('bg-[#3F4248]', 'text-white');
+                    link.classList.remove('text-[#B9BBBE]', 'hover:text-white', 'hover:bg-[#313338]');
+                    console.log("Navigated to:", link.textContent.trim());
+                });
+            });
+        }
+
+        // --- NEW: Utility Button Logic ---
+        function setupUtilityButtons() {
+            // User profile bar
+            document.querySelector('footer.h-14 .cursor-pointer').addEventListener('click', () => console.log('User profile clicked'));
+            document.querySelector('footer.h-14 button[class*="hover:bg-"]').addEventListener('click', () => console.log('Mic button clicked'));
+            document.getElementById('settings-button').addEventListener('click', () => console.log('Settings button clicked'));
+            
+            // Mobile header
+            document.getElementById('mobile-search-button').addEventListener('click', () => console.log('Mobile search clicked'));
+        }
+
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFeed();
+            setupLikeButtons();
+            setupGiftButtons();
+            setupModalCloseButtons(); // Add
+            setupCommentButtons();  // Add
+            setupShareButtons();    // Modified
+            setupShareServerLogic(); // Modified name
+            setupSidebarLinks();    // Add
+            setupUtilityButtons();  // Add
+            setupProfileButtons();  // NEW
+            setupProfileGiftLogic(); // NEW
+            // setupProfileTabLogic(); // REPLACED
+            
+            // NEW: Setup tab logic for both modals
+            setupTabLogic('profile-tabs', 'profile-tab-content');
+            setupTabLogic('video-stats-tabs', 'video-stats-tab-content');
+        });
+    </script>
+</body>
+</html>
